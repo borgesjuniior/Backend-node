@@ -1,7 +1,7 @@
 const { request } = require('express');
 const express = require ('express');
 const app = express()
-const { uuid } = require('uuidv4')
+const { uuid, isUuid } = require('uuidv4')
 
 
 app.use(express.json())
@@ -36,9 +36,19 @@ function logRequest(req, res, next) {
 
 }
 
+function validateProjectId(req, res, next) {
+    const { id } = req.params;
+
+    if(!isUuid(id)) {
+        return res.status(400).json({"Error": "Project id is not valid."})
+    }
+
+    return next()
+}
+
 const projects = []
 
-app.get('/projects', (req, res) => res.json(projects)); //O midleware pode ser passado de forma especifica para uma rota antes do req, res
+app.get('/projects', (req, res) => res.json(projects)); 
 
 app.post('/projects', (req, res) => {
 
@@ -50,7 +60,7 @@ app.post('/projects', (req, res) => {
     return res.json(project)
 });
 
-app.put('/projects/:id', (req, res) => {
+app.put('/projects/:id', validateProjectId, (req, res) => { //O midleware pode ser passado de forma especifica para uma rota antes do req, res
     const { id } = req.params;
     const { title, owner} = req.body;
 
@@ -72,7 +82,7 @@ app.put('/projects/:id', (req, res) => {
 
 });
 
-app.delete('/projects/:id', (req, res) => {
+app.delete('/projects/:id', validateProjectId, (req, res) => {
     const { id } = req.params;
 
     const projectIndex = projects.findIndex(project => project.id == id); //Busca a posição do Id no array
